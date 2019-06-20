@@ -39,9 +39,7 @@ main = do
 iterateAndCheckVal :: [Int] -> Int -> Set.Set Int -> IO Int
 iterateAndCheckVal cleanInput lastNumber numberSet = do
   let newNumbers = sumValue lastNumber cleanInput
-      newLast = last newNumbers
-      eitherIntOrNewNumberSet = traverse (checkForDupOrInsert numberSet) $ tail newNumbers
-  either pure (iterateAndCheckVal cleanInput newLast . Set.unions) eitherIntOrNewNumberSet
+  either pure (iterateAndCheckVal cleanInput (last newNumbers) . Set.unions) . traverse (checkForDupOrInsert numberSet) $ tail newNumbers
 
 checkForDupOrInsert :: Set.Set Int -> Int -> Either Int (Set.Set Int)
 checkForDupOrInsert numberSet a =
