@@ -26,16 +26,16 @@ main = interact (show . findCorrectBox . lines)
 findCorrectBox :: [String] -> String
 findCorrectBox strs =
   let indexedMaps = map (zip [1 ..]) strs
-  in  case searchBoxes indexedMaps $ head indexedMaps of
-        Just x  -> x
-        Nothing -> findCorrectBox $ tail strs
+  in
+    case searchBoxes indexedMaps $ head indexedMaps of
+      Just x -> x
+      Nothing -> findCorrectBox $ tail strs
 
 searchBoxes :: [[(Int, Char)]] -> [(Int, Char)] -> Maybe String
 searchBoxes indexedMaps currentIndexedStr = case indexedMaps of
-  []     -> Nothing
+  [] -> Nothing
   x : xs -> case findIntersection x currentIndexedStr of
-    intersection_ | length x - 1 == length intersection_ ->
-      Just $ fmap snd intersection_
+    intersection_ | length x - 1 == length intersection_ -> Just $ fmap snd intersection_
     _ -> searchBoxes xs currentIndexedStr
 
 findIntersection :: [(Int, Char)] -> [(Int, Char)] -> [(Int, Char)]
