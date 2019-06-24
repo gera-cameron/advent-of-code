@@ -33,18 +33,16 @@ import qualified Text.Read as Read
 main :: IO ()
 main = do
   contents <- getContents
-  print $ iterateAndCheckVal (parseNumbers contents) 0 Set.empty
+  print $ iterateAndCheckVal (cycle $ parseNumbers contents) Set.empty
 
-iterateAndCheckVal :: [Int] -> Int -> Set.Set Int -> Int
-iterateAndCheckVal cleanInput lastNumber numberSet = do
-  let newNumbers = scanl (+) lastNumber cleanInput
-  case traverse (checkForDupOrInsert numberSet) $ tail newNumbers of
-    Right sets -> iterateAndCheckVal cleanInput (last newNumbers) $ Set.unions sets
-    Left a -> a
+iterateAndCheckVal :: [Int] -> Set.Set Int -> Int
+iterateAndCheckVal foreverList numberSet = do
+  let resultSet = scanl (+) 0 foreverList
+  checkForDupOrInsert numberSet resultSet
 
-checkForDupOrInsert :: Set.Set Int -> Int -> Either Int (Set.Set Int)
-checkForDupOrInsert numberSet a =
-  if Set.member a numberSet then Left a else Right $ Set.insert a numberSet
+checkForDupOrInsert :: Set.Set Int -> [Int] -> Int
+checkForDupOrInsert numberSet (a:as) =
+  if Set.member a numberSet then a else checkForDupOrInsert (Set.insert a numberSet) as
 
 parseNumbers :: String -> [Int]
 parseNumbers = Maybe.mapMaybe Read.readMaybe . lines . filter (/= '+')
