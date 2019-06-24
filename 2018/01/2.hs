@@ -33,20 +33,18 @@ import qualified Text.Read as Read
 main :: IO ()
 main = do
   contents <- getContents
-  duplicate <- iterateAndCheckVal (parseNumbers contents) 0 $ Set.empty
-  putStrLn $ show duplicate
+  print $ iterateAndCheckVal (parseNumbers contents) 0 Set.empty
 
-iterateAndCheckVal :: [Int] -> Int -> Set.Set Int -> IO Int
+iterateAndCheckVal :: [Int] -> Int -> Set.Set Int -> Int
 iterateAndCheckVal cleanInput lastNumber numberSet = do
-  let newNumbers = sumValue lastNumber cleanInput
-  either pure (iterateAndCheckVal cleanInput (last newNumbers) . Set.unions) . traverse (checkForDupOrInsert numberSet) $ tail newNumbers
+  let newNumbers = scanl (+) lastNumber cleanInput
+  case traverse (checkForDupOrInsert numberSet) $ tail newNumbers of
+    Right sets -> iterateAndCheckVal cleanInput (last newNumbers) $ Set.unions sets
+    Left a -> a
 
 checkForDupOrInsert :: Set.Set Int -> Int -> Either Int (Set.Set Int)
 checkForDupOrInsert numberSet a =
   if Set.member a numberSet then Left a else Right $ Set.insert a numberSet
-
-sumValue :: Int -> [Int] -> [Int]
-sumValue = scanl (+)
 
 parseNumbers :: String -> [Int]
 parseNumbers = Maybe.mapMaybe Read.readMaybe . lines . filter (/= '+')
