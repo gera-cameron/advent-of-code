@@ -1,11 +1,19 @@
 import qualified Data.Char as Char
 import qualified Data.List as List
 import qualified Data.Maybe as Maybe
+import qualified Data.Map as Map
 import qualified Data.Time as Time
 
 main = do
   contents <- readFile "input.txt"
   print
+    . findSleepiestGuardsFrequencies
+    . last
+    . List.sortOn (length . snd)
+    . Map.toList
+    . fmap (calculateTimeAsleep [])
+    . buildGuardToActionTuple [] Nothing
+    . fmap snd
     . List.sortOn fst
     . Maybe.catMaybes
     . fmap buildTimeToEventTuple
@@ -25,7 +33,33 @@ parseAction time action = case action of
   "wakes up" -> GuardAwakes $ toMinutes time
   _ -> GuardOnDuty . read $ filter Char.isNumber action
 
-data Action = GuardOnDuty Int | GuardSleeps Time.DiffTime | GuardAwakes Time.DiffTime
+data Action = GuardOnDuty Int | GuardSleeps Int | GuardAwakes Int
   deriving (Eq, Show)
 
-toMinutes = (/ 60) . Time.utctDayTime
+toMinutes = fromInteger . (flip div 60) . (flip div 1000000000000) .  Time.diffTimeToPicoseconds . Time.utctDayTime
+
+buildGuardToActionTuple :: [(Int, [Action])] -> Maybe Int -> [Action] -> Map.Map Int [Action]
+buildGuardToActionTuple accumulationList maybeGuardNumber actions = case (actions, maybeGuardNumber) of
+  ([], _) -> Map.fromListWith (<>) accumulationList
+  (x : xs, Just guardNumber) -> case x of
+    GuardOnDuty currentGuardNumber ->
+      buildGuardToActionTuple accumulationList (Just currentGuardNumber) xs
+    _ -> buildGuardToActionTuple ((guardNumber, [x]) : accumulationList) maybeGuardNumber xs
+  (x : xs, Nothing) -> case x of
+    GuardOnDuty currentGuardNumber ->
+      buildGuardToActionTuple accumulationList (Just currentGuardNumber) xs
+    _ -> buildGuardToActionTuple accumulationList maybeGuardNumber xs
+
+calculateTimeAsleep :: [Int] -> [Action] -> [Int]
+calculateTimeAsleep accumulationList actions = case actions of
+  [] -> accumulationList
+  GuardSleeps diff1 : GuardAwakes diff2 : rest -> calculateTimeAsleep ([diff1 .. diff2 - 1] <> accumulationList) rest
+
+findSleepiestGuardsFrequencies :: (Int, [Int]) -> Int
+findSleepiestGuardsFrequencies (g, minutes) =
+  (\((g, minute), _) -> g * minute)
+  . last
+  . List.sortOn snd
+  . Map.toList
+  . Map.fromListWith (+)
+  $ fmap (\minute -> ((g, minute), 1)) minutes
