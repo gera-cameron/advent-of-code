@@ -12,7 +12,7 @@ main = do
     . List.sortOn (length . snd)
     . Map.toList
     . fmap (calculateTimeAsleep [])
-    . buildGuardToActionTuple [] Nothing
+    . buildGuardToActionMap [] Nothing
     . fmap snd
     . List.sortOn fst
     . Maybe.catMaybes
@@ -38,17 +38,17 @@ data Action = GuardOnDuty Int | GuardSleeps Int | GuardAwakes Int
 
 toMinutes = fromInteger . (flip div 60) . (flip div 1000000000000) .  Time.diffTimeToPicoseconds . Time.utctDayTime
 
-buildGuardToActionTuple :: [(Int, [Action])] -> Maybe Int -> [Action] -> Map.Map Int [Action]
-buildGuardToActionTuple accumulationList maybeGuardNumber actions = case (actions, maybeGuardNumber) of
+buildGuardToActionMap :: [(Int, [Action])] -> Maybe Int -> [Action] -> Map.Map Int [Action]
+buildGuardToActionMap accumulationList maybeGuardNumber actions = case (actions, maybeGuardNumber) of
   ([], _) -> Map.fromListWith (<>) accumulationList
   (x : xs, Just guardNumber) -> case x of
     GuardOnDuty currentGuardNumber ->
-      buildGuardToActionTuple accumulationList (Just currentGuardNumber) xs
-    _ -> buildGuardToActionTuple ((guardNumber, [x]) : accumulationList) maybeGuardNumber xs
+      buildGuardToActionMap accumulationList (Just currentGuardNumber) xs
+    _ -> buildGuardToActionMap ((guardNumber, [x]) : accumulationList) maybeGuardNumber xs
   (x : xs, Nothing) -> case x of
     GuardOnDuty currentGuardNumber ->
-      buildGuardToActionTuple accumulationList (Just currentGuardNumber) xs
-    _ -> buildGuardToActionTuple accumulationList maybeGuardNumber xs
+      buildGuardToActionMap accumulationList (Just currentGuardNumber) xs
+    _ -> buildGuardToActionMap accumulationList maybeGuardNumber xs
 
 calculateTimeAsleep :: [Int] -> [Action] -> [Int]
 calculateTimeAsleep accumulationList actions = case actions of
