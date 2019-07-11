@@ -36,7 +36,8 @@ parseAction time action = case action of
 data Action = GuardOnDuty Int | GuardSleeps Int | GuardAwakes Int
   deriving (Eq, Show)
 
-toMinutes = fromInteger . (flip div 60) . (flip div 1000000000000) .  Time.diffTimeToPicoseconds . Time.utctDayTime
+toMinutes :: Time.UTCTime -> Int
+toMinutes = round . (flip (/) 60) . realToFrac . Time.utctDayTime
 
 buildGuardToActionMap :: [(Int, [Action])] -> Maybe Int -> [Action] -> Map.Map Int [Action]
 buildGuardToActionMap accumulationList maybeGuardNumber actions = case (actions, maybeGuardNumber) of
