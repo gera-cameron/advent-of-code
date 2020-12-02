@@ -22,10 +22,6 @@ isValid txts = case txts of
         letter = Text.unpack $ Text.filter (/= ':') letterWithColon
         lowLetter = Text.index password (lowNum - 1) : []
         highLetter = Text.index password (highNum - 1) : []
-      in case (lowLetter == letter, highLetter == letter) of
-        (True, True) -> False
-        (True, False) -> True
-        (False, True) -> True
-        (False, False) -> False
+      in (lowLetter /= letter && highLetter == letter) || (lowLetter == letter && highLetter /= letter) 
     _ -> False
   _ -> False
